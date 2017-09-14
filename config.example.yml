@@ -1,0 +1,6 @@
+settings:
+  version: 1
+projects:
+  project_name:
+    database:
+      name: supply_crm_staging
