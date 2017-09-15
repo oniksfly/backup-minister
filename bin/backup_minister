@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+require 'backup_minister'
+require 'thor'
+
+class CLI < Thor
+  desc 'backup_database', 'Move database TAR GZ archive to destination directory'
+  option :project_name, type: :string, required: true, aliases: :name
+  option :file, type: :string, required: true, banner: '</Path/to/database/backup.tar.gz>'
+  def backup_database
+    server = BackupMinister::Server.new
+    server.place_database_backup(options[:project_name], options[:file])
+  end
+
+  desc 'sync_path', 'Server\'s path for files'
+  option :project_name, type: :string, required: true, aliases: :name
+  def sync_path
+    server = BackupMinister::Server.new
+    path = server.project_files_location(options[:project_name])
+    if path.nil?
+      exit!(true)
+    else
+      puts path
+    end
+  end
+end
+
+CLI.start(ARGV)

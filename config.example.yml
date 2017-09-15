@@ -1,6 +1,15 @@
 settings:
   version: 1
+  database_container: postgres
+  agent:
+    connection_string:
+  server:
+    user: backuper
+    host: 127.0.0.1
+    location: '/media/external'
 projects:
-  project_name:
+  first_project:
     database:
+      driver: :docker
       name: database_name
+      user: database_user
