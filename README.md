@@ -1,3 +1,5 @@
+[![Gem Version](https://badge.fury.io/rb/backup_minister.svg)](https://badge.fury.io/rb/backup_minister)
+
 # Backup Minister
 Provide two sides method to backup data from docker containers to single remote server or set of servers.
 

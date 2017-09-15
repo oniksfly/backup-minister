@@ -3,3 +3,5 @@
 
 .ruby-gemset
 config.yml
+
+backup_minister-*.gem
