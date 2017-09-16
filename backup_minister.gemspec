@@ -2,7 +2,7 @@ require 'rake'
 
 Gem::Specification.new do |s|
   s.name                    = 'backup_minister'
-  s.version                 = '0.0.1'
+  s.version                 = '0.0.2'
   s.date                    = '2017-09-14'
   s.summary                 = 'Backup Minister'
   s.description             = 'Provide tools for multi-server backups with docker support'

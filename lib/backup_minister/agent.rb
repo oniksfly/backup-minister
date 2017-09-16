@@ -8,6 +8,7 @@ DATABASE_DRIVERS = %i(docker)
 class BackupMinister::Agent < BackupMinister
   @projects = nil
   @config_file_name = nil
+  @remote_server_connection = nil
 
   def initialize(file_name = nil)
     super
@@ -68,7 +69,7 @@ class BackupMinister::Agent < BackupMinister
         LOGGER.info "Connection with server #{user}@#{host} established."
 
         remote_install = connection.exec!("gem list -i #{APP_NAME}")
-        if remote_install == 'true'
+        if remote_install.to_s.strip == 'true'
           LOGGER.debug "#{APP_NAME} installed on remote server."
           result = true
         else
@@ -150,6 +151,45 @@ class BackupMinister::Agent < BackupMinister
     result
   end
 
+  # Move database backup to server
+  #
+  # @return [String, nil] path to backup on remote server
+  def place_database_backup(file_path)
+    result = nil
+    destination_directory = '/tmp/'
+    scp_command = "scp #{file_path} #{system_config('server', 'user')}@#{system_config('server', 'host')}:#{destination_directory}"
+    if execute(scp_command)
+      LOGGER.debug "Backup #{file_path} placed remotely to #{destination_directory}."
+
+      FileUtils.rm(file_path)
+      LOGGER.debug "Local file #{file_path} removed."
+
+      result = destination_directory + File.basename(file_path)
+    else
+      LOGGER.error "Could not move #{file_path} to server."
+    end
+    result
+  end
+
+  # Execute command on remote server for processing database backup
+  #
+  # @param project_name [String]
+  # @param remote_file_path [String]
+  # @param sha256 [String, nil]
+  #
+  # @return [Bool] is operation success?
+  def process_remote_database_backup(project_name, remote_file_path, sha256 = nil)
+    result = false
+    command = "#{APP_NAME} store_database_backup"
+    command += " --project_name=#{project_name}"
+    command += " --file=#{remote_file_path}"
+    command += " --sha256=#{sha256}" unless sha256.nil?
+
+    execute_remotely { result = (@remote_server_connection.exec!(command).exitstatus == 0) }
+
+    result
+  end
+
   # Create TAR GZ single file archive
   #
   # @param file_name [String] file name for new archive (including extension)
@@ -194,5 +234,28 @@ class BackupMinister::Agent < BackupMinister
       LOGGER.warn "Can't delete file #{file.path} with error: #{error}."
       nil
     end
+  end
+
+  def remote_server_connect
+    if check_server_requirements
+      begin
+        host = system_config('server', 'host')
+        user = system_config('server', 'user')
+
+        @remote_server_connection = Net::SSH.start(host, user)
+      rescue Exception => error
+        LOGGER.error "Could not establish connection: #{error.message}"
+      end
+    end
+  end
+
+  def remote_server_close_connection
+    @remote_server_connection.close if !@remote_server_connection.nil? and !@remote_server_connection.closed?
+  end
+
+  def execute_remotely
+    remote_server_connect
+    yield if block_given?
+    remote_server_close_connection
   end
 end

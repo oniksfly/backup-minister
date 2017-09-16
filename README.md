@@ -14,7 +14,13 @@ Gems will install:
 
 `gem install backup_minister`
 
+May be `sudo` required for system-wide installation
+
 ## Usage
+For database backup run on agent machine:
+```bash
+backup_minister backup_database --project_name=PROJECT_NAME_FROM_CONFIG
+```
 
 ### Configuration
 

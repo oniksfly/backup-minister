@@ -2,6 +2,7 @@ require 'net/ssh'
 require 'open3'
 require 'logger'
 require 'fileutils'
+require 'digest'
 
 LOGGER = Logger.new(STDOUT)
 APP_NAME = 'backup_minister'
@@ -85,6 +86,16 @@ class BackupMinister
     out, st = Open3.capture2(command, arguments)
     LOGGER.warn "Failed to execute command `#{command}` with code #{st.exitstatus}." unless st.success?
     out
+  end
+
+  # Get SHA256 Hash of file
+  #
+  # @param file_path [String] path to file
+  #
+  # @return [String, nil]
+  def file_sha256_hash(file_path)
+    file = File.read(file_path)
+    Digest::SHA256.hexdigest(file) if file
   end
 
   private
